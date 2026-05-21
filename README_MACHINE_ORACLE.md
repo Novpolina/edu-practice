@@ -1,10 +1,8 @@
 # Machine Oracle: syscall -> SBI -> M-mode CSR
 
-## Проделанная работа
+Я реализовала небольшую цепочку, которая проходит из userspace до OpenSBI в M-mode и возвращает значение обратно в приложение, добавила новый Linux syscall `machine_oracle`, новый SBI extension в OpenSBI и userspace-приложение `/opt/machine_oracle`. В OpenSBI читается machine-mode CSR `CSR_MVENDORID`, а приложение печатает значение, которое пришло обратно через SBI и syscall.
 
-Я реализовала небольшую учебную цепочку, которая проходит из userspace до OpenSBI в M-mode и возвращает значение обратно в приложение, добавила новый Linux syscall `machine_oracle`, новый SBI extension в OpenSBI и userspace-приложение `/opt/machine_oracle`. В OpenSBI читается machine-mode CSR `CSR_MVENDORID`, а приложение печатает значение, которое пришло обратно через SBI и syscall.
-
-Главная идея простая: приложение само не читает machine CSR. Оно просит ядро, ядро делает SBI-вызов, а реальное чтение происходит в OpenSBI, где есть M-mode.
+Приложение само не читает machine CSR. Оно просит ядро, ядро делает SBI-вызов, а реальное чтение происходит в OpenSBI, где есть M-mode.
 
 ## Как работает цепочка
 
@@ -40,9 +38,7 @@
 
 ### scripts/docs
 
-- `5_opensbi.sh` - оставила новый файл OpenSBI handler вне удаления через `git clean`, чтобы учебный обработчик не исчезал перед сборкой.
-- `README_MACHINE_ORACLE.md` - основной документ для демонстрации.
-- `NOTES_MACHINE_ORACLE.md` - короткая ссылка на этот README, без дублирования.
+- `5_opensbi.sh` - оставила новый файл OpenSBI handler вне удаления через `git clean`
 - `demo-machine-oracle.log` - лог runtime-проверки в QEMU.
 
 ## Технические детали
@@ -55,12 +51,6 @@
 - CSR: `CSR_MVENDORID`
 - userspace path: `/opt/machine_oracle`
 
-## Почему CSR читается именно в OpenSBI
-
-Userspace-приложение работает в U-mode, Linux kernel работает в S-mode, а OpenSBI работает в M-mode. Machine-mode CSR нельзя честно читать напрямую из userspace, и идея задания как раз в том, чтобы дойти до M-mode. Поэтому приложение делает syscall, ядро делает SBI-вызов, а `csr_read(CSR_MVENDORID)` выполняется уже в OpenSBI.
-
-Так я демонстрирую не просто новый syscall, а полный переход между уровнями привилегий: U-mode -> S-mode -> M-mode -> обратно.
-
 ## Как пересобрать
 
 Для обычной сборки проект после изменений запускается из корня репозитория:
@@ -72,15 +62,6 @@ Userspace-приложение работает в U-mode, Linux kernel рабо
 ./6_demos.sh
 ./7_rootfs.sh
 ```
-
-Коротко по смыслу:
-
-- `./5_opensbi.sh` пересобирает OpenSBI.
-- `./3_linux_prepare.sh` подготавливает Linux tree.
-- `./4_linux.sh` пересобирает ядро.
-- `./6_demos.sh` собирает `/opt/machine_oracle` в rootfs overlay.
-- `./7_rootfs.sh` пересобирает rootfs.
-
 ## Как запустить
 
 ```sh
@@ -100,11 +81,11 @@ ls -lh /opt/machine_oracle
 /opt/machine_oracle
 ```
 
-Ожидаемый смысл вывода: Linux загрузился, бинарник существует, приложение запускается и печатает `mvendorid`, полученный из M-mode.
+Linux загрузился, бинарник существует, приложение запускается и печатает `mvendorid`, полученный из M-mode.
 
 ## Проверка в runtime
 
-Я проверила запуск внутри QEMU и сохранила лог в `demo-machine-oracle.log`. В локальном дереве не было полного buildroot SDK и локально собранного QEMU, поэтому runtime-проверка выполнялась с системным `/usr/bin/qemu-system-riscv64` и минимальным initramfs. Это не меняет суть проверки: цепочка `syscall -> SBI -> OpenSBI M-mode -> CSR -> userspace` реально прошла внутри QEMU.
+Я проверила запуск внутри QEMU и сохранила лог в `demo-machine-oracle.log`.
 
 Ключевой фрагмент лога:
 
@@ -130,21 +111,3 @@ RUNTIME CHECK PASSED
 - SBI-вызов не упал.
 - Значение `mvendorid` вернулось в userspace.
 - Приложение завершилось с `exit status: 0`.
-
-## Как показать, что это не просто printf
-
-На хосте можно показать такие команды:
-
-```sh
-grep -R "0900CAFE" -n .
-grep -R "machine_oracle" -n .
-grep -R "CSR_MVENDORID" -n .
-```
-
-По ним видно, что:
-
-- `0x0900CAFE` есть и в Linux, и в OpenSBI.
-- `machine_oracle` зарегистрирован как syscall и вызывается из userspace.
-- В OpenSBI есть отдельный handler `sbi_ecall_machine_oracle.c`.
-- Реальное чтение CSR сделано через `csr_read(CSR_MVENDORID)`.
-

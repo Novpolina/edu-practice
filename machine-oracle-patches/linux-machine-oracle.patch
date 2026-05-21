@@ -1,0 +1,72 @@
+diff --git a/arch/riscv/include/asm/sbi.h b/arch/riscv/include/asm/sbi.h
+index 5725e0ca4..a02ef13f5 100644
+--- a/arch/riscv/include/asm/sbi.h
++++ b/arch/riscv/include/asm/sbi.h
+@@ -46,6 +46,8 @@ enum sbi_ext_id {
+ 	/* Vendor extensions must lie within this range */
+ 	SBI_EXT_VENDOR_START = 0x09000000,
+ 	SBI_EXT_VENDOR_END = 0x09FFFFFF,
++
++	SBI_EXT_MACHINE_ORACLE = 0x0900CAFE,
+ };
+ 
+ enum sbi_ext_base_fid {
+@@ -58,6 +60,13 @@ enum sbi_ext_base_fid {
+ 	SBI_EXT_BASE_GET_MIMPID,
+ };
+ 
++enum sbi_ext_machine_oracle_fid {
++	SBI_EXT_MACHINE_ORACLE_READ_MVENDORID = 0,
++	SBI_EXT_MACHINE_ORACLE_READ_MARCHID,
++	SBI_EXT_MACHINE_ORACLE_READ_MIMPID,
++	SBI_EXT_MACHINE_ORACLE_READ_MHARTID,
++};
++
+ enum sbi_ext_time_fid {
+ 	SBI_EXT_TIME_SET_TIMER = 0,
+ };
+diff --git a/arch/riscv/kernel/sys_riscv.c b/arch/riscv/kernel/sys_riscv.c
+index 795b2e815..dbe4cebfb 100644
+--- a/arch/riscv/kernel/sys_riscv.c
++++ b/arch/riscv/kernel/sys_riscv.c
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/syscalls.h>
+ #include <asm/cacheflush.h>
++#include <asm/sbi.h>
+ 
+ static long riscv_sys_mmap(unsigned long addr, unsigned long len,
+ 			   unsigned long prot, unsigned long flags,
+@@ -68,6 +69,23 @@ SYSCALL_DEFINE3(riscv_flush_icache, uintptr_t, start, uintptr_t, end,
+ 	return 0;
+ }
+ 
++SYSCALL_DEFINE0(machine_oracle)
++{
++#ifdef CONFIG_RISCV_SBI
++	struct sbiret ret;
++
++	ret = sbi_ecall(SBI_EXT_MACHINE_ORACLE,
++			SBI_EXT_MACHINE_ORACLE_READ_MVENDORID,
++			0, 0, 0, 0, 0, 0);
++	if (ret.error)
++		return sbi_err_map_linux_errno(ret.error);
++
++	return ret.value;
++#else
++	return -EOPNOTSUPP;
++#endif
++}
++
+ /* Not defined using SYSCALL_DEFINE0 to avoid error injection */
+ asmlinkage long __riscv_sys_ni_syscall(const struct pt_regs *__unused)
+ {
+diff --git a/scripts/syscall.tbl b/scripts/syscall.tbl
+index e74868be5..28f6c2c5d 100644
+--- a/scripts/syscall.tbl
++++ b/scripts/syscall.tbl
+@@ -411,3 +411,4 @@
+ 468	common	file_getattr			sys_file_getattr
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
++471	riscv	machine_oracle			sys_machine_oracle

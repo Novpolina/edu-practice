@@ -1,0 +1,100 @@
+diff --git a/include/sbi/sbi_ecall_interface.h b/include/sbi/sbi_ecall_interface.h
+index 76624e3..53b2800 100644
+--- a/include/sbi/sbi_ecall_interface.h
++++ b/include/sbi/sbi_ecall_interface.h
+@@ -38,6 +38,7 @@
+ #define SBI_EXT_SSE				0x535345
+ #define SBI_EXT_FWFT				0x46574654
+ #define SBI_EXT_MPXY				0x4D505859
++#define SBI_EXT_MACHINE_ORACLE			0x0900CAFE
+ 
+ /* SBI function IDs for BASE extension*/
+ #define SBI_EXT_BASE_GET_SPEC_VERSION		0x0
+@@ -48,6 +49,12 @@
+ #define SBI_EXT_BASE_GET_MARCHID		0x5
+ #define SBI_EXT_BASE_GET_MIMPID			0x6
+ 
++/* SBI function IDs for Machine Oracle extension */
++#define SBI_EXT_MACHINE_ORACLE_READ_MVENDORID	0x0
++#define SBI_EXT_MACHINE_ORACLE_READ_MARCHID	0x1
++#define SBI_EXT_MACHINE_ORACLE_READ_MIMPID	0x2
++#define SBI_EXT_MACHINE_ORACLE_READ_MHARTID	0x3
++
+ /* SBI function IDs for TIME extension*/
+ #define SBI_EXT_TIME_SET_TIMER			0x0
+ 
+diff --git a/lib/sbi/objects.mk b/lib/sbi/objects.mk
+index 07d1322..4564e26 100644
+--- a/lib/sbi/objects.mk
++++ b/lib/sbi/objects.mk
+@@ -28,6 +28,9 @@ libsbi-objs-$(CONFIG_SBI_ECALL_IPI) += sbi_ecall_ipi.o
+ carray-sbi_ecall_exts-y += ecall_base
+ libsbi-objs-y += sbi_ecall_base.o
+ 
++carray-sbi_ecall_exts-y += ecall_machine_oracle
++libsbi-objs-y += sbi_ecall_machine_oracle.o
++
+ carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_HSM) += ecall_hsm
+ libsbi-objs-$(CONFIG_SBI_ECALL_HSM) += sbi_ecall_hsm.o
+ 
+diff --git a/lib/sbi/sbi_ecall_machine_oracle.c b/lib/sbi/sbi_ecall_machine_oracle.c
+new file mode 100644
+index 0000000..04f86f9
+--- /dev/null
++++ b/lib/sbi/sbi_ecall_machine_oracle.c
+@@ -0,0 +1,55 @@
++/*
++ * SPDX-License-Identifier: BSD-2-Clause
++ *
++ * Tiny educational SBI extension for reading selected M-mode CSRs.
++ */
++
++#include <sbi/riscv_asm.h>
++#include <sbi/sbi_ecall.h>
++#include <sbi/sbi_ecall_interface.h>
++#include <sbi/sbi_error.h>
++#include <sbi/sbi_trap.h>
++
++static int sbi_ecall_machine_oracle_handler(unsigned long extid,
++					    unsigned long funcid,
++					    struct sbi_trap_regs *regs,
++					    struct sbi_ecall_return *out)
++{
++	int ret = 0;
++
++	switch (funcid) {
++	case SBI_EXT_MACHINE_ORACLE_READ_MVENDORID:
++		out->value = csr_read(CSR_MVENDORID);
++		break;
++	case SBI_EXT_MACHINE_ORACLE_READ_MARCHID:
++		out->value = csr_read(CSR_MARCHID);
++		break;
++	case SBI_EXT_MACHINE_ORACLE_READ_MIMPID:
++		out->value = csr_read(CSR_MIMPID);
++		break;
++	case SBI_EXT_MACHINE_ORACLE_READ_MHARTID:
++		out->value = csr_read(CSR_MHARTID);
++		break;
++	default:
++		ret = SBI_ENOTSUPP;
++		break;
++	}
++
++	return ret;
++}
++
++struct sbi_ecall_extension ecall_machine_oracle;
++
++static int sbi_ecall_machine_oracle_register_extensions(void)
++{
++	return sbi_ecall_register_extension(&ecall_machine_oracle);
++}
++
++struct sbi_ecall_extension ecall_machine_oracle = {
++	.name			= "moracle",
++	.extid_start		= SBI_EXT_MACHINE_ORACLE,
++	.extid_end		= SBI_EXT_MACHINE_ORACLE,
++	.experimental		= true,
++	.register_extensions	= sbi_ecall_machine_oracle_register_extensions,
++	.handle			= sbi_ecall_machine_oracle_handler,
++};
