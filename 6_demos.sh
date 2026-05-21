@@ -8,6 +8,7 @@ ${CROSS_COMPILE}gcc -O2 -g demo_races/compiler_opts.c -o $ROOTFS_OVERLAY/opt/com
 ${CROSS_COMPILE}gcc -O2 -g demo_races/cpu_opts.c -o $ROOTFS_OVERLAY/opt/cpu_opts
 ${CROSS_COMPILE}gcc -O2 -g demo_races/icache.c -o $ROOTFS_OVERLAY/opt/icache
 ${CROSS_COMPILE}gcc -O2 -g demo_races/machine_oracle.c -o $ROOTFS_OVERLAY/opt/machine_oracle
+${CROSS_COMPILE}gcc -O2 -g demo_races/page_tree_target.c -o $ROOTFS_OVERLAY/opt/page_tree_target
 ${CROSS_COMPILE}gcc -O2 -g demo_races/small.c -o $ROOTFS_OVERLAY/opt/small
 ${CROSS_COMPILE}gcc -O0 -g demo_races/small.c -o $ROOTFS_OVERLAY/opt/small_no_opt
 ${CROSS_COMPILE}gcc -O2 -g -fno-stack-protector demo_races/memset.c -o $ROOTFS_OVERLAY/opt/memset
@@ -21,8 +22,10 @@ cp demo_races/authorized_keys $ROOTFS_OVERLAY/root/.ssh
 mkdir -p $ROOTFS_OVERLAY/etc/dropbear
 cp demo_races/dropbear_ed25519_host_key $ROOTFS_OVERLAY/etc/dropbear
 
-CC=${CROSS_COMPILE}gcc make -C demo_races/pagemap
-cp demo_races/pagemap/pagemap $ROOTFS_OVERLAY/opt/
+if [ -d demo_races/pagemap ]; then
+    CC=${CROSS_COMPILE}gcc make -C demo_races/pagemap
+    cp demo_races/pagemap/pagemap $ROOTFS_OVERLAY/opt/
+fi
 
 #CC=${CROSS_COMPILE}gcc OBJCOPY=${CROSS_COMPILE}objcopy make -C ../crackme
 cp demo_races/crackme $ROOTFS_OVERLAY/opt/

@@ -1,0 +1,467 @@
++ nproc
++ JOBS=16
++ CROSS_COMPILE=/home/evgeniy/Documents/polina_RISC-V/edu-practice/output/toolchain/bin/riscv64-buildroot-linux-gnu-
++ ROOTS_OUT=/home/evgeniy/Documents/polina_RISC-V/edu-practice/output/rootfs.cpio
++ KERNEL_OUT=/home/evgeniy/Documents/polina_RISC-V/edu-practice/output/vmlinux.bin
++ SBI_OUT=/home/evgeniy/Documents/polina_RISC-V/edu-practice/output/fw_dynamic.bin
++ SBI_ELF=/home/evgeniy/Documents/polina_RISC-V/edu-practice/output/fw_dynamic.elf
++ ROOTFS_OVERLAY=/home/evgeniy/Documents/polina_RISC-V/edu-practice/rootfs_overlay
++ ./qemu_build/qemu-system-riscv64 -smp 4 -machine virt -cpu rv64,v=true,vlen=128,sscofpmf=true -m 256m -nographic -bios /home/evgeniy/Documents/polina_RISC-V/edu-practice/output/fw_dynamic.bin -kernel /home/evgeniy/Documents/polina_RISC-V/edu-practice/output/vmlinux.bin -initrd /home/evgeniy/Documents/polina_RISC-V/edu-practice/output/rootfs.cpio -append console=ttyS0 earlycon root=/dev/ram0 rw init=/init -device virtio-net-device,netdev=net -netdev user,id=net,hostfwd=tcp::2345-:2345,hostfwd=tcp::10022-:22 -gdb tcp::1234 -monitor telnet:127.0.0.1:1122,server,nowait -serial mon:stdio
+vector version is not specified, use the default value v1.0
+vector version is not specified, use the default value v1.0
+vector version is not specified, use the default value v1.0
+vector version is not specified, use the default value v1.0
+
+OpenSBI v1.8
+Build time: 2026-05-21 04:54:53 +0300
+Build compiler: gcc version 13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04)
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name               : riscv-virtio,qemu
+Platform Features           : medeleg
+Platform HART Count         : 4
+Platform HART Protection    : pmp
+Platform IPI Device         : aclint-mswi
+Platform Timer Device       : aclint-mtimer @ 10000000Hz
+Platform Console Device     : uart8250
+Platform HSM Device         : ---
+Platform PMU Device         : ---
+Platform Reboot Device      : syscon-reboot
+Platform Shutdown Device    : syscon-poweroff
+Platform Suspend Device     : ---
+Platform CPPC Device        : ---
+Firmware Base               : 0x80000000
+Firmware Size               : 613 KB
+Firmware RW Offset          : 0x80000
+Firmware RW Size            : 101 KB
+Firmware Heap Offset        : 0x8d000
+Firmware Heap Size          : 49 KB (total), 0 KB (reserved), 13 KB (used), 35 KB (free)
+Firmware Scratch Size       : 4096 B (total), 1464 B (used), 2632 B (free)
+Runtime SBI Version         : 3.0
+Standard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse
+Experimental SBI Extensions : moracle
+
+Domain0 Name                : root
+Domain0 Boot HART           : 2
+Domain0 HARTs               : 0*,1*,2*,3*
+Domain0 Region00            : 0x0000000080080000-0x000000008009ffff M: (F,R,W) S/U: ()
+Domain0 Region01            : 0x0000000080000000-0x000000008007ffff M: (F,R,X) S/U: ()
+Domain0 Region02            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)
+Domain0 Region03            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)
+Domain0 Region04            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()
+Domain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)
+Domain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)
+Domain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)
+Domain0 Next Address        : 0x0000000080200000
+Domain0 Next Arg1           : 0x000000008fe00000
+Domain0 Next Mode           : S-mode
+Domain0 SysReset            : yes
+Domain0 SysSuspend          : yes
+
+Boot HART ID                : 2
+Boot HART Domain            : root
+Boot HART Priv Version      : v1.12
+Boot HART Base ISA          : rv64imafdcvh
+Boot HART ISA Extensions    : sscofpmf,sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu
+Boot HART PMP Count         : 16
+Boot HART PMP Granularity   : 2 bits
+Boot HART PMP Address Bits  : 54
+Boot HART MHPM Info         : 16 (0x0007fff8)
+Boot HART Debug Triggers    : 2 triggers
+Boot HART MIDELEG           : 0x0000000000003666
+Boot HART MEDELEG           : 0x0000000000f0b509
+[    0.000000] Booting Linux on hartid 2
+[    0.000000] Linux version 6.19.0-dirty (evgeniy@evgeniy-KLVF-XX) (riscv64-buildroot-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #2 SMP PREEMPT Thu May 21 04:53:51 MSK 2026
+[    0.000000] random: crng init done
+[    0.000000] Machine model: riscv-virtio,qemu
+[    0.000000] SBI specification v3.0 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x10008
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] SBI FWFT extension detected
+[    0.000000] earlycon: ns16550a0 at MMIO 0x0000000010000000 (options '')
+[    0.000000] printk: legacy bootconsole [ns16550a0] enabled
+[    0.000000] OF: reserved mem: 0x0000000080000000..0x000000008007ffff (512 KiB) nomap non-reusable mmode_resv1@80000000
+[    0.000000] OF: reserved mem: 0x0000000080080000..0x000000008009ffff (128 KiB) nomap non-reusable mmode_resv0@80080000
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000008fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x000000008009ffff]
+[    0.000000]   node   0: [mem 0x00000000800a0000-0x000000008fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000008fffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acdfhimv
+[    0.000000] riscv: ELF capabilities acdfimv
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 20 pages/cpu s44264 r8192 d29464 u81920
+[    0.000000] Kernel command line: console=ttyS0 earlycon root=/dev/ram0 rw init=/init
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.000000] software IO TLB: SWIOTLB bounce buffer size adjusted to 0MB
+[    0.000000] software IO TLB: area num 4.
+[    0.000000] software IO TLB: SWIOTLB bounce buffer size roundup to 1MB
+[    0.000000] software IO TLB: mapped [mem 0x000000008fe3e000-0x000000008ff3e000] (1MB)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]       fixmap : 0xff1bfffffea00000 - 0xff1bffffff000000   (6144 kB)
+[    0.000000]       pci io : 0xff1bffffff000000 - 0xff1c000000000000   (  16 MB)
+[    0.000000]      vmemmap : 0xff1c000000000000 - 0xff20000000000000   (1024 TB)
+[    0.000000]      vmalloc : 0xff20000000000000 - 0xff60000000000000   (16384 TB)
+[    0.000000]      modules : 0xffffffff0132a000 - 0xffffffff80000000   (2028 MB)
+[    0.000000]       lowmem : 0xff60000000000000 - 0xff60000010000000   ( 256 MB)
+[    0.000000]       kernel : 0xffffffff80000000 - 0xffffffffffffffff   (2047 MB)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 65536
+[    0.000000] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=8 to nr_cpu_ids=4.
+[    0.000000] rcu: 	RCU debug extended QS entry/exit.
+[    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 10 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[    0.000000] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000] RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000195] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.003072] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.016660] Console: colour dummy device 80x25
+[    0.028795] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=100000)
+[    0.031191] pid_max: default: 32768 minimum: 301
+[    0.041976] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.044317] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.123793] ASID allocator using 16 bits (65536 entries)
+[    0.127624] rcu: Hierarchical SRCU implementation.
+[    0.128465] rcu: 	Max phase no-delay instances is 1000.
+[    0.131568] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.142373] smp: Bringing up secondary CPUs ...
+[    0.182365] smp: Brought up 1 node, 4 CPUs
+[    0.203601] Memory: 231888K/262144K available (7153K kernel code, 4791K rwdata, 4096K rodata, 2232K init, 307K bss, 28192K reserved, 0K cma-reserved)
+[    0.224389] devtmpfs: initialized
+[    0.250270] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.251431] posixtimers hash table entries: 2048 (order: 4, 65536 bytes, linear)
+[    0.252485] futex hash table entries: 1024 (65536 bytes on 1 NUMA nodes, total 64 KiB, linear).
+[    0.261268] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.267993] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.279092] SBI misaligned access exception delegation ok
+[    0.344181] cpu3: Ratio of byte access time to unaligned word access is 6.14, unaligned accesses are fast
+[    0.344206] cpu2: Ratio of byte access time to unaligned word access is 5.92, unaligned accesses are fast
+[    0.344188] cpu1: Ratio of byte access time to unaligned word access is 5.00, unaligned accesses are fast
+[    0.405003] cpu0: Ratio of byte access time to unaligned word access is 8.13, unaligned accesses are fast
+[    0.552870] cpu2: Ratio of vector byte access time to vector unaligned word access is 1.80, unaligned accesses are fast
+[    0.553458] cpu0: Ratio of vector byte access time to vector unaligned word access is 3.27, unaligned accesses are fast
+[    0.552886] cpu1: Ratio of vector byte access time to vector unaligned word access is 3.29, unaligned accesses are fast
+[    0.574405] cpu3: Ratio of vector byte access time to vector unaligned word access is 3.27, unaligned accesses are fast
+[    0.646810] iommu: Default domain type: Translated
+[    0.647207] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.656838] SCSI subsystem initialized
+[    0.686566] clocksource: Switched to clocksource riscv_clocksource
+[    0.696267] Page Tree Oracle procfs entry ready at /proc/page_tree_oracle
+[    0.779746] NET: Registered PF_INET protocol family
+[    0.782776] IP idents hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.792501] tcp_listen_portaddr_hash hash table entries: 128 (order: 0, 4096 bytes, linear)
+[    0.793311] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.793752] TCP established hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.794898] TCP bind hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[    0.797027] TCP: Hash tables configured (established 2048 bind 2048)
+[    0.800462] UDP hash table entries: 256 (order: 4, 40960 bytes, linear)
+[    0.801327] UDP-Lite hash table entries: 256 (order: 4, 40960 bytes, linear)
+[    0.804052] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.815656] RPC: Registered named UNIX socket transport module.
+[    0.817668] RPC: Registered udp transport module.
+[    0.817994] RPC: Registered tcp transport module.
+[    0.818227] RPC: Registered tcp-with-tls transport module.
+[    0.818485] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.819268] PCI: CLS 0 bytes, default 64
+[    0.821585] kvm [1]: hypervisor extension available
+[    0.821960] kvm [1]: using Sv57x4 G-stage page table format
+[    0.822388] kvm [1]: VMID 14 bits available
+[    0.830867] Trying to unpack rootfs image as initramfs...
+[    0.857136] Freeing initrd memory: 1152K
+[    0.867268] workingset: timestamp_bits=62 max_order=16 bucket_order=0
+[    0.877942] NFS: Registering the id_resolver key type
+[    0.878951] Key type id_resolver registered
+[    0.879314] Key type id_legacy registered
+[    0.880194] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[    0.880748] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[    0.882921] fuse: init (API version 7.45)
+[    0.886916] 9p: Installing v9fs 9p2000 file system support
+[    0.891703] NET: Registered PF_ALG protocol family
+[    0.892597] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+[    0.893214] io scheduler mq-deadline registered
+[    0.893567] io scheduler kyber registered
+[    0.909209] riscv-plic: plic@c000000: mapped 95 interrupts with 4 handlers for 8 contexts.
+[    0.914755] pci-host-generic 30000000.pci: host bridge /soc/pci@30000000 ranges:
+[    0.916592] pci-host-generic 30000000.pci:       IO 0x0003000000..0x000300ffff -> 0x0000000000
+[    0.917849] pci-host-generic 30000000.pci:      MEM 0x0040000000..0x007fffffff -> 0x0040000000
+[    0.918299] pci-host-generic 30000000.pci:      MEM 0x0400000000..0x07ffffffff -> 0x0400000000
+[    0.920163] pci-host-generic 30000000.pci: Memory resource size exceeds max for 32 bits
+[    0.921184] pci-host-generic 30000000.pci: ECAM at [mem 0x30000000-0x3fffffff] for [bus 00-ff]
+[    0.923624] pci-host-generic 30000000.pci: PCI host bridge to bus 0000:00
+[    0.924330] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    0.924680] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.924979] pci_bus 0000:00: root bus resource [mem 0x40000000-0x7fffffff]
+[    0.925751] pci_bus 0000:00: root bus resource [mem 0x400000000-0x7ffffffff]
+[    0.928045] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000 conventional PCI endpoint
+[    0.935443] pci_bus 0000:00: resource 4 [io  0x0000-0xffff]
+[    0.935853] pci_bus 0000:00: resource 5 [mem 0x40000000-0x7fffffff]
+[    0.936127] pci_bus 0000:00: resource 6 [mem 0x400000000-0x7ffffffff]
+[    1.394143] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    1.416821] printk: legacy console [ttyS0] disabled
+[    1.420771] 10000000.serial: ttyS0 at MMIO 0x10000000 (irq = 12, base_baud = 230400) is a 16550A
+[    1.424153] printk: legacy console [ttyS0] enabled
+[    1.424153] printk: legacy console [ttyS0] enabled
+[    1.425980] printk: legacy bootconsole [ns16550a0] disabled
+[    1.425980] printk: legacy bootconsole [ns16550a0] disabled
+[    1.475601] brd: module loaded
+[    1.500562] loop: module loaded
+[    1.503206] zram: Added device: zram0
+[    1.514156] null_blk: disk nullb0 created
+[    1.514566] null_blk: module loaded
+[    1.543885] mousedev: PS/2 mouse device common for all mice
+[    1.550110] goldfish_rtc 101000.rtc: registered as rtc0
+[    1.551559] goldfish_rtc 101000.rtc: setting system clock to 2026-05-21T01:56:33 UTC (1779328593)
+[    1.561186] NET: Registered PF_INET6 protocol family
+[    1.574551] Segment Routing with IPv6
+[    1.575597] In-situ OAM (IOAM) with IPv6
+[    1.576520] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    1.581380] NET: Registered PF_PACKET protocol family
+[    1.583752] 9pnet: Installing 9P2000 support
+[    1.584584] Key type dns_resolver registered
+[    1.640234] debug_vm_pgtable: [debug_vm_pgtable         ]: Validating architecture page table helpers
+[    1.656810] clk: Disabling unused clocks
+[    1.777464] Freeing unused kernel image (initmem) memory: 2232K
+[    1.779568] Run /init as init process
+# uname -a
+Linux (none) 6.19.0-dirty #2 SMP PREEMPT Thu May 21 04:53:51 MSK 2026 riscv64
+# ls -lh /proc/page_tree_oracle
+-rw-r--r-- 1 root root 0 /proc/page_tree_oracle
+# ls -lh /opt/page_tree_target
+-rwxrwxr-x 1 root root 598728 /opt/page_tree_target
+# /opt/page_tree_target &
+started page_tree_target pid: 60
+target pid: 60
+page_tree_target: heap=0x92680 mmap=0x7fff8d190000 checksum=1058
+# echo 60 > /proc/page_tree_oracle
+# cat /proc/page_tree_oracle
+Page Tree Oracle
+pid: 60
+comm: page_tree_targe
+mm: ff60000002748000
+page size: 4096
+pte output limit: 1024
+
+VMA 0000000000010000-0000000000085000 r-xp /opt/page_tree_target
+PGD[000] present val=0x0000000020996c01
+  P4D[000] present val=0x0000000020867001
+    PUD[000] present val=0x0000000020867401
+      PMD[000] present val=0x0000000020867801
+        PTE[010] VA 0x0000000000010000 PFN 0x820fa flags=V|R|X|U|A raw=0x000000002083e85b
+        PTE[011] VA 0x0000000000011000 PFN 0x820fb flags=V|R|X|U|A raw=0x000000002083ec5b
+        PTE[012] VA 0x0000000000012000 PFN 0x820fc flags=V|R|X|U|A raw=0x000000002083f05b
+        PTE[013] VA 0x0000000000013000 PFN 0x820fd flags=V|R|X|U|A raw=0x000000002083f45b
+        PTE[014] VA 0x0000000000014000 PFN 0x820fe flags=V|R|X|U|A raw=0x000000002083f85b
+        PTE[015] VA 0x0000000000015000 PFN 0x820ff flags=V|R|X|U|A raw=0x000000002083fc5b
+        PTE[016] VA 0x0000000000016000 PFN 0x82100 flags=V|R|X|U|A raw=0x000000002084005b
+        PTE[017] VA 0x0000000000017000 PFN 0x82101 flags=V|R|X|U|A raw=0x000000002084045b
+        PTE[018] VA 0x0000000000018000 PFN 0x82102 flags=V|R|X|U|A raw=0x000000002084085b
+        PTE[019] VA 0x0000000000019000 PFN 0x82103 flags=V|R|X|U|A raw=0x0000000020840c5b
+        PTE[01a] VA 0x000000000001a000 PFN 0x82104 flags=V|R|X|U|A raw=0x000000002084105b
+        PTE[01b] VA 0x000000000001b000 PFN 0x82105 flags=V|R|X|U|A raw=0x000000002084145b
+        PTE[01c] VA 0x000000000001c000 PFN 0x82106 flags=V|R|X|U|A raw=0x000000002084185b
+        PTE[01d] VA 0x000000000001d000 PFN 0x82107 flags=V|R|X|U|A raw=0x0000000020841c5b
+        PTE[01e] VA 0x000000000001e000 PFN 0x82108 flags=V|R|X|U|A raw=0x000000002084205b
+        PTE[01f] VA 0x000000000001f000 PFN 0x82109 flags=V|R|X|U|A raw=0x000000002084245b
+        PTE[020] VA 0x0000000000020000 PFN 0x8210a flags=V|R|X|U|A raw=0x000000002084285b
+        PTE[021] VA 0x0000000000021000 PFN 0x8210b flags=V|R|X|U|A raw=0x0000000020842c5b
+        PTE[022] VA 0x0000000000022000 PFN 0x8210c flags=V|R|X|U|A raw=0x000000002084305b
+        PTE[023] VA 0x0000000000023000 PFN 0x8210d flags=V|R|X|U|A raw=0x000000002084345b
+        PTE[024] VA 0x0000000000024000 PFN 0x8210e flags=V|R|X|U|A raw=0x000000002084385b
+        PTE[025] VA 0x0000000000025000 PFN 0x8210f flags=V|R|X|U|A raw=0x0000000020843c5b
+        PTE[026] VA 0x0000000000026000 PFN 0x82110 flags=V|R|X|U|A raw=0x000000002084405b
+        PTE[027] VA 0x0000000000027000 PFN 0x82111 flags=V|R|X|U|A raw=0x000000002084445b
+        PTE[028] VA 0x0000000000028000 PFN 0x82112 flags=V|R|X|U|A raw=0x000000002084485b
+        PTE[029] VA 0x0000000000029000 PFN 0x82113 flags=V|R|X|U|A raw=0x0000000020844c5b
+        PTE[02a] VA 0x000000000002a000 PFN 0x82114 flags=V|R|X|U|A raw=0x000000002084505b
+        PTE[02b] VA 0x000000000002b000 PFN 0x82115 flags=V|R|X|U|A raw=0x000000002084545b
+        PTE[02c] VA 0x000000000002c000 PFN 0x82116 flags=V|R|X|U|A raw=0x000000002084585b
+        PTE[02d] VA 0x000000000002d000 PFN 0x82117 flags=V|R|X|U|A raw=0x0000000020845c5b
+        PTE[02e] VA 0x000000000002e000 PFN 0x82118 flags=V|R|X|U|A raw=0x000000002084605b
+        PTE[02f] VA 0x000000000002f000 PFN 0x82119 flags=V|R|X|U|A raw=0x000000002084645b
+        PTE[030] VA 0x0000000000030000 PFN 0x8211a flags=V|R|X|U|A raw=0x000000002084685b
+        PTE[031] VA 0x0000000000031000 PFN 0x8211b flags=V|R|X|U|A raw=0x0000000020846c5b
+        PTE[032] VA 0x0000000000032000 PFN 0x8211c flags=V|R|X|U|A raw=0x000000002084705b
+        PTE[033] VA 0x0000000000033000 PFN 0x8211d flags=V|R|X|U|A raw=0x000000002084745b
+        PTE[034] VA 0x0000000000034000 PFN 0x8211e flags=V|R|X|U|A raw=0x000000002084785b
+        PTE[035] VA 0x0000000000035000 PFN 0x8211f flags=V|R|X|U|A raw=0x0000000020847c5b
+        PTE[036] VA 0x0000000000036000 PFN 0x82120 flags=V|R|X|U|A raw=0x000000002084805b
+        PTE[037] VA 0x0000000000037000 PFN 0x82121 flags=V|R|X|U|A raw=0x000000002084845b
+        PTE[038] VA 0x0000000000038000 PFN 0x82122 flags=V|R|X|U|A raw=0x000000002084885b
+        PTE[039] VA 0x0000000000039000 PFN 0x82123 flags=V|R|X|U|A raw=0x0000000020848c5b
+        PTE[03a] VA 0x000000000003a000 PFN 0x82124 flags=V|R|X|U|A raw=0x000000002084905b
+        PTE[03b] VA 0x000000000003b000 PFN 0x82125 flags=V|R|X|U|A raw=0x000000002084945b
+        PTE[03c] VA 0x000000000003c000 PFN 0x82126 flags=V|R|X|U|A raw=0x000000002084985b
+        PTE[03d] VA 0x000000000003d000 PFN 0x82127 flags=V|R|X|U|A raw=0x0000000020849c5b
+        PTE[03e] VA 0x000000000003e000 PFN 0x82128 flags=V|R|X|U|A raw=0x000000002084a05b
+        PTE[03f] VA 0x000000000003f000 PFN 0x82129 flags=V|R|X|U|A raw=0x000000002084a45b
+        PTE[040] VA 0x0000000000040000 PFN 0x8212a flags=V|R|X|U|A raw=0x000000002084a85b
+        PTE[041] VA 0x0000000000041000 PFN 0x8212b flags=V|R|X|U|A raw=0x000000002084ac5b
+        PTE[042] VA 0x0000000000042000 PFN 0x8212c flags=V|R|X|U|A raw=0x000000002084b05b
+        PTE[043] VA 0x0000000000043000 PFN 0x8212d flags=V|R|X|U|A raw=0x000000002084b45b
+        PTE[044] VA 0x0000000000044000 PFN 0x8212e flags=V|R|X|U|A raw=0x000000002084b85b
+        PTE[045] VA 0x0000000000045000 PFN 0x8212f flags=V|R|X|U|A raw=0x000000002084bc5b
+        PTE[046] VA 0x0000000000046000 PFN 0x82130 flags=V|R|X|U|A raw=0x000000002084c05b
+        PTE[047] VA 0x0000000000047000 PFN 0x82131 flags=V|R|X|U|A raw=0x000000002084c45b
+        PTE[048] VA 0x0000000000048000 PFN 0x82132 flags=V|R|X|U|A raw=0x000000002084c85b
+        PTE[049] VA 0x0000000000049000 PFN 0x82133 flags=V|R|X|U|A raw=0x000000002084cc5b
+        PTE[04a] VA 0x000000000004a000 PFN 0x82134 flags=V|R|X|U|A raw=0x000000002084d05b
+        PTE[04b] VA 0x000000000004b000 PFN 0x82135 flags=V|R|X|U|A raw=0x000000002084d45b
+        PTE[04c] VA 0x000000000004c000 PFN 0x82136 flags=V|R|X|U|A raw=0x000000002084d85b
+        PTE[04d] VA 0x000000000004d000 PFN 0x82137 flags=V|R|X|U|A raw=0x000000002084dc5b
+        PTE[04e] VA 0x000000000004e000 PFN 0x82138 flags=V|R|X|U|A raw=0x000000002084e05b
+        PTE[04f] VA 0x000000000004f000 PFN 0x82139 flags=V|R|X|U|A raw=0x000000002084e45b
+        PTE[050] VA 0x0000000000050000 PFN 0x8213a flags=V|R|X|U|A raw=0x000000002084e85b
+        PTE[051] VA 0x0000000000051000 PFN 0x8213b flags=V|R|X|U|A raw=0x000000002084ec5b
+        PTE[052] VA 0x0000000000052000 PFN 0x8213c flags=V|R|X|U|A raw=0x000000002084f05b
+        PTE[053] VA 0x0000000000053000 PFN 0x8213d flags=V|R|X|U|A raw=0x000000002084f45b
+        PTE[054] VA 0x0000000000054000 PFN 0x8213e flags=V|R|X|U|A raw=0x000000002084f85b
+        PTE[055] VA 0x0000000000055000 PFN 0x8213f flags=V|R|X|U|A raw=0x000000002084fc5b
+        PTE[056] VA 0x0000000000056000 PFN 0x82140 flags=V|R|X|U|A raw=0x000000002085005b
+        PTE[057] VA 0x0000000000057000 PFN 0x82141 flags=V|R|X|U|A raw=0x000000002085045b
+        PTE[058] VA 0x0000000000058000 PFN 0x82142 flags=V|R|X|U|A raw=0x000000002085085b
+        PTE[059] VA 0x0000000000059000 PFN 0x82143 flags=V|R|X|U|A raw=0x0000000020850c5b
+        PTE[05a] VA 0x000000000005a000 PFN 0x82144 flags=V|R|X|U|A raw=0x000000002085105b
+        PTE[05b] VA 0x000000000005b000 PFN 0x82145 flags=V|R|X|U|A raw=0x000000002085145b
+        PTE[05c] VA 0x000000000005c000 PFN 0x82146 flags=V|R|X|U|A raw=0x000000002085185b
+        PTE[05d] VA 0x000000000005d000 PFN 0x82147 flags=V|R|X|U|A raw=0x0000000020851c5b
+        PTE[05e] VA 0x000000000005e000 PFN 0x82148 flags=V|R|X|U|A raw=0x000000002085205b
+        PTE[05f] VA 0x000000000005f000 PFN 0x82149 flags=V|R|X|U|A raw=0x000000002085245b
+        PTE[060] VA 0x0000000000060000 PFN 0x8214a flags=V|R|X|U|A raw=0x000000002085285b
+        PTE[061] VA 0x0000000000061000 PFN 0x8214b flags=V|R|X|U|A raw=0x0000000020852c5b
+        PTE[062] VA 0x0000000000062000 PFN 0x8214c flags=V|R|X|U|A raw=0x000000002085305b
+        PTE[063] VA 0x0000000000063000 PFN 0x8214d flags=V|R|X|U|A raw=0x000000002085345b
+        PTE[064] VA 0x0000000000064000 PFN 0x8214e flags=V|R|X|U|A raw=0x000000002085385b
+        PTE[065] VA 0x0000000000065000 PFN 0x8214f flags=V|R|X|U|A raw=0x0000000020853c5b
+        PTE[066] VA 0x0000000000066000 PFN 0x82150 flags=V|R|X|U|A raw=0x000000002085405b
+        PTE[067] VA 0x0000000000067000 PFN 0x82151 flags=V|R|X|U|A raw=0x000000002085445b
+        PTE[068] VA 0x0000000000068000 PFN 0x82152 flags=V|R|X|U|A raw=0x000000002085485b
+        PTE[069] VA 0x0000000000069000 PFN 0x82153 flags=V|R|X|U|A raw=0x0000000020854c5b
+        PTE[06a] VA 0x000000000006a000 PFN 0x82154 flags=V|R|X|U|A raw=0x000000002085505b
+        PTE[06b] VA 0x000000000006b000 PFN 0x82155 flags=V|R|X|U|A raw=0x000000002085545b
+        PTE[06c] VA 0x000000000006c000 PFN 0x82156 flags=V|R|X|U|A raw=0x000000002085585b
+        PTE[06d] VA 0x000000000006d000 PFN 0x82157 flags=V|R|X|U|A raw=0x0000000020855c5b
+        PTE[06e] VA 0x000000000006e000 PFN 0x82158 flags=V|R|X|U|A raw=0x000000002085605b
+        PTE[06f] VA 0x000000000006f000 PFN 0x82159 flags=V|R|X|U|A raw=0x000000002085645b
+        PTE[070] VA 0x0000000000070000 PFN 0x8215a flags=V|R|X|U|A raw=0x000000002085685b
+        PTE[071] VA 0x0000000000071000 PFN 0x8215b flags=V|R|X|U|A raw=0x0000000020856c5b
+        PTE[072] VA 0x0000000000072000 PFN 0x8215c flags=V|R|X|U|A raw=0x000000002085705b
+        PTE[073] VA 0x0000000000073000 PFN 0x8215d flags=V|R|X|U|A raw=0x000000002085745b
+        PTE[074] VA 0x0000000000074000 PFN 0x8215e flags=V|R|X|U|A raw=0x000000002085785b
+        PTE[075] VA 0x0000000000075000 PFN 0x8215f flags=V|R|X|U|A raw=0x0000000020857c5b
+        PTE[076] VA 0x0000000000076000 PFN 0x82160 flags=V|R|X|U|A raw=0x000000002085805b
+        PTE[077] VA 0x0000000000077000 PFN 0x82161 flags=V|R|X|U|A raw=0x000000002085845b
+        PTE[078] VA 0x0000000000078000 PFN 0x82162 flags=V|R|X|U|A raw=0x000000002085885b
+        PTE[079] VA 0x0000000000079000 PFN 0x82163 flags=V|R|X|U|A raw=0x0000000020858c5b
+        PTE[07a] VA 0x000000000007a000 PFN 0x82164 flags=V|R|X|U|A raw=0x000000002085905b
+        PTE[07b] VA 0x000000000007b000 PFN 0x82165 flags=V|R|X|U|A raw=0x000000002085945b
+        PTE[07c] VA 0x000000000007c000 PFN 0x82166 flags=V|R|X|U|A raw=0x000000002085985b
+        PTE[07d] VA 0x000000000007d000 PFN 0x82167 flags=V|R|X|U|A raw=0x0000000020859c5b
+        PTE[07e] VA 0x000000000007e000 PFN 0x82168 flags=V|R|X|U|A raw=0x000000002085a05b
+        PTE[07f] VA 0x000000000007f000 PFN 0x82169 flags=V|R|X|U|A raw=0x000000002085a45b
+        PTE[080] VA 0x0000000000080000 PFN 0x8216a flags=V|R|X|U|A raw=0x000000002085a85b
+        PTE[081] VA 0x0000000000081000 PFN 0x8216b flags=V|R|X|U|A raw=0x000000002085ac5b
+        PTE[082] VA 0x0000000000082000 PFN 0x8216c flags=V|R|X|U|A raw=0x000000002085b05b
+        PTE[083] VA 0x0000000000083000 PFN 0x8216d flags=V|R|X|U|A raw=0x000000002085b45b
+        PTE[084] VA 0x0000000000084000 PFN 0x8216e flags=V|R|X|U|A raw=0x000000002085b85b
+
+VMA 0000000000085000-000000000008a000 r--p /opt/page_tree_target
+PGD[000] present val=0x0000000020996c01
+  P4D[000] present val=0x0000000020867001
+    PUD[000] present val=0x0000000020867401
+      PMD[000] present val=0x0000000020867801
+        PTE[085] VA 0x0000000000085000 PFN 0x8216e flags=V|R|U|A raw=0x000000002085b853
+        PTE[086] VA 0x0000000000086000 PFN 0x8216f flags=V|R|U|A raw=0x000000002085bc53
+        PTE[087] VA 0x0000000000087000 PFN 0x88319 flags=V|R|U|A|D raw=0x00000000220c64d3
+        PTE[088] VA 0x0000000000088000 PFN 0x82171 flags=V|R|U|A raw=0x000000002085c453
+        PTE[089] VA 0x0000000000089000 PFN 0x8831f flags=V|R|U|A|D raw=0x00000000220c7cd3
+
+VMA 000000000008a000-000000000008c000 rw-p /opt/page_tree_target
+PGD[000] present val=0x0000000020996c01
+  P4D[000] present val=0x0000000020867001
+    PUD[000] present val=0x0000000020867401
+      PMD[000] present val=0x0000000020867801
+        PTE[08a] VA 0x000000000008a000 PFN 0x80c2b flags=V|R|W|U|A|D raw=0x000000002030acd7
+        PTE[08b] VA 0x000000000008b000 PFN 0x8831e flags=V|R|W|U|A|D raw=0x00000000220c78d7
+
+VMA 000000000008c000-0000000000091000 rw-p [anon]
+PGD[000] present val=0x0000000020996c01
+  P4D[000] present val=0x0000000020867001
+    PUD[000] present val=0x0000000020867401
+      PMD[000] present val=0x0000000020867801
+        PTE[08c] VA 0x000000000008c000 PFN 0x80c27 flags=V|R|W|U|A|D raw=0x0000000020309cd7
+        PTE[090] VA 0x0000000000090000 PFN 0x80c23 flags=V|R|W|U|A|D raw=0x0000000020308cd7
+
+VMA 0000000000091000-00000000000b3000 rw-p [heap]
+PGD[000] present val=0x0000000020996c01
+  P4D[000] present val=0x0000000020867001
+    PUD[000] present val=0x0000000020867401
+      PMD[000] present val=0x0000000020867801
+        PTE[091] VA 0x0000000000091000 PFN 0x8831a flags=V|R|W|U|A|D raw=0x00000000220c68d7
+        PTE[092] VA 0x0000000000092000 PFN 0x88317 flags=V|R|W|U|A|D raw=0x00000000220c5cd7
+        PTE[093] VA 0x0000000000093000 PFN 0x88315 flags=V|R|W|U|A|D raw=0x00000000220c54d7
+        PTE[094] VA 0x0000000000094000 PFN 0x88314 flags=V|R|W|U|A|D raw=0x00000000220c50d7
+        PTE[095] VA 0x0000000000095000 PFN 0x88313 flags=V|R|W|U|A|D raw=0x00000000220c4cd7
+        PTE[096] VA 0x0000000000096000 PFN 0x88312 flags=V|R|W|U|A|D raw=0x00000000220c48d7
+        PTE[097] VA 0x0000000000097000 PFN 0x88311 flags=V|R|W|U|A|D raw=0x00000000220c44d7
+        PTE[098] VA 0x0000000000098000 PFN 0x88310 flags=V|R|W|U|A|D raw=0x00000000220c40d7
+        PTE[099] VA 0x0000000000099000 PFN 0x8830f flags=V|R|W|U|A|D raw=0x00000000220c3cd7
+        PTE[09a] VA 0x000000000009a000 PFN 0x88316 flags=V|R|W|U|A|D raw=0x00000000220c58d7
+        PTE[09b] VA 0x000000000009b000 PFN 0x8830a flags=V|R|W|U|A|D raw=0x00000000220c28d7
+
+VMA 00007fff8d190000-00007fff8d194000 rw-p [anon]
+PGD[000] present val=0x0000000020996c01
+  P4D[0ff] present val=0x0000000020865c01
+    PUD[1fe] present val=0x0000000020867c01
+      PMD[068] present val=0x0000000020868001
+        PTE[190] VA 0x00007fff8d190000 PFN 0x8830e flags=V|R|W|U|A|D raw=0x00000000220c38d7
+        PTE[191] VA 0x00007fff8d191000 PFN 0x8830d flags=V|R|W|U|A|D raw=0x00000000220c34d7
+        PTE[192] VA 0x00007fff8d192000 PFN 0x8830c flags=V|R|W|U|A|D raw=0x00000000220c30d7
+        PTE[193] VA 0x00007fff8d193000 PFN 0x8830b flags=V|R|W|U|A|D raw=0x00000000220c2cd7
+
+VMA 00007fff8d194000-00007fff8d198000 r--p [vvar]
+
+VMA 00007fff8d198000-00007fff8d19a000 r-xp [vdso]
+PGD[000] present val=0x0000000020996c01
+  P4D[0ff] present val=0x0000000020865c01
+    PUD[1fe] present val=0x0000000020867c01
+      PMD[068] present val=0x0000000020868001
+        PTE[198] VA 0x00007fff8d198000 PFN 0x81404 flags=V|R|X|U|A raw=0x000000002050105b
+
+VMA 00007fffe4afe000-00007fffe4b1f000 rw-p [stack]
+PGD[000] present val=0x0000000020996c01
+  P4D[0ff] present val=0x0000000020865c01
+    PUD[1ff] present val=0x0000000020866401
+      PMD[125] present val=0x0000000020866801
+        PTE[11d] VA 0x00007fffe4b1d000 PFN 0x88318 flags=V|R|W|U|A|D raw=0x00000000220c60d7
+        PTE[11e] VA 0x00007fffe4b1e000 PFN 0x8831b flags=V|R|W|U|A|D raw=0x00000000220c6cd7
+page_tree_oracle exit status: 0
+RUNTIME CHECK PASSED
+[    3.019547] kvm: exiting hardware virtualization
+[    3.021160] reboot: Power down

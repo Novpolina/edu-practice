@@ -1,0 +1,513 @@
+diff --git a/fs/proc/Makefile b/fs/proc/Makefile
+index 7b4db9c56..a2e6049ca 100644
+--- a/fs/proc/Makefile
++++ b/fs/proc/Makefile
+@@ -7,7 +7,7 @@ obj-y   += proc.o
+ 
+ CFLAGS_task_mmu.o	+= -Wno-override-init
+ proc-y			:= nommu.o task_nommu.o
+-proc-$(CONFIG_MMU)	:= task_mmu.o
++proc-$(CONFIG_MMU)	:= task_mmu.o page_tree_oracle.o
+ 
+ proc-y       += inode.o root.o base.o generic.o array.o \
+ 		fd.o
+diff --git a/fs/proc/page_tree_oracle.c b/fs/proc/page_tree_oracle.c
+new file mode 100644
+index 000000000..708d0f722
+--- /dev/null
++++ b/fs/proc/page_tree_oracle.c
+@@ -0,0 +1,494 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Page Tree Oracle: small teaching-oriented procfs view of user page tables.
++ */
++
++#include <linux/fs.h>
++#include <linux/init.h>
++#include <linux/mm.h>
++#include <linux/mutex.h>
++#include <linux/pid.h>
++#include <linux/proc_fs.h>
++#include <linux/rcupdate.h>
++#include <linux/sched.h>
++#include <linux/sched/mm.h>
++#include <linux/seq_file.h>
++#include <linux/spinlock.h>
++#include <linux/string.h>
++#include <linux/uaccess.h>
++
++#include <asm/pgtable-bits.h>
++
++#define PAGE_TREE_ORACLE_MAX_PTES 1024
++
++static DEFINE_MUTEX(page_tree_oracle_lock);
++static int page_tree_oracle_pid = -1;
++
++struct page_tree_oracle_ctx {
++	struct seq_file *m;
++	struct mm_struct *mm;
++	unsigned int pte_count;
++	bool truncated;
++};
++
++static void page_tree_oracle_put_flag(struct seq_file *m, bool *first,
++				      const char *flag)
++{
++	if (!*first)
++		seq_putc(m, '|');
++	seq_puts(m, flag);
++	*first = false;
++}
++
++static void page_tree_oracle_show_flags(struct seq_file *m, unsigned long val)
++{
++	bool first = true;
++
++	if (val & _PAGE_PRESENT)
++		page_tree_oracle_put_flag(m, &first, "V");
++	if (val & _PAGE_READ)
++		page_tree_oracle_put_flag(m, &first, "R");
++	if (val & _PAGE_WRITE)
++		page_tree_oracle_put_flag(m, &first, "W");
++	if (val & _PAGE_EXEC)
++		page_tree_oracle_put_flag(m, &first, "X");
++	if (val & _PAGE_USER)
++		page_tree_oracle_put_flag(m, &first, "U");
++	if (val & _PAGE_ACCESSED)
++		page_tree_oracle_put_flag(m, &first, "A");
++	if (val & _PAGE_DIRTY)
++		page_tree_oracle_put_flag(m, &first, "D");
++	if (val & _PAGE_GLOBAL)
++		page_tree_oracle_put_flag(m, &first, "G");
++
++	if (first)
++		seq_putc(m, '-');
++}
++
++static const char *page_tree_oracle_p4d_state(struct mm_struct *mm)
++{
++#ifdef mm_p4d_folded
++	return mm_p4d_folded(mm) ? "folded/present" : "present";
++#else
++	return "present";
++#endif
++}
++
++static const char *page_tree_oracle_pud_state(struct mm_struct *mm)
++{
++#ifdef mm_pud_folded
++	return mm_pud_folded(mm) ? "folded/present" : "present";
++#else
++	return "present";
++#endif
++}
++
++static void page_tree_oracle_show_table_path(struct page_tree_oracle_ctx *ctx,
++					     unsigned long addr, pgd_t pgd,
++					     p4d_t p4d, pud_t pud, pmd_t pmd)
++{
++	struct seq_file *m = ctx->m;
++
++	seq_printf(m, "PGD[%03lx] present val=0x%016lx\n",
++		   pgd_index(addr), (unsigned long)pgd_val(pgd));
++	seq_printf(m, "  P4D[%03lx] %s val=0x%016lx\n",
++		   p4d_index(addr), page_tree_oracle_p4d_state(ctx->mm),
++		   (unsigned long)p4d_val(p4d));
++	seq_printf(m, "    PUD[%03lx] %s val=0x%016lx\n",
++		   pud_index(addr), page_tree_oracle_pud_state(ctx->mm),
++		   (unsigned long)pud_val(pud));
++	seq_printf(m, "      PMD[%03lx] present val=0x%016lx\n",
++		   pmd_index(addr), (unsigned long)pmd_val(pmd));
++}
++
++static void page_tree_oracle_show_pud_path(struct page_tree_oracle_ctx *ctx,
++					   unsigned long addr, pgd_t pgd,
++					   p4d_t p4d)
++{
++	struct seq_file *m = ctx->m;
++
++	seq_printf(m, "PGD[%03lx] present val=0x%016lx\n",
++		   pgd_index(addr), (unsigned long)pgd_val(pgd));
++	seq_printf(m, "  P4D[%03lx] %s val=0x%016lx\n",
++		   p4d_index(addr), page_tree_oracle_p4d_state(ctx->mm),
++		   (unsigned long)p4d_val(p4d));
++}
++
++static void page_tree_oracle_show_vma_name(struct seq_file *m,
++					   struct vm_area_struct *vma)
++{
++	const char *name = NULL;
++
++	if (vma->vm_file) {
++		seq_putc(m, ' ');
++		seq_path(m, file_user_path(vma->vm_file), "\n");
++		return;
++	}
++
++	if (vma->vm_ops && vma->vm_ops->name)
++		name = vma->vm_ops->name(vma);
++	if (!name)
++		name = arch_vma_name(vma);
++	if (!name && vma_is_initial_heap(vma))
++		name = "[heap]";
++	if (!name && vma_is_initial_stack(vma))
++		name = "[stack]";
++	if (!name)
++		name = "[anon]";
++
++	seq_printf(m, " %s", name);
++}
++
++static void page_tree_oracle_show_vma(struct seq_file *m,
++				      struct vm_area_struct *vma)
++{
++	vm_flags_t flags = vma->vm_flags;
++
++	seq_printf(m, "\nVMA %016lx-%016lx %c%c%c%c",
++		   vma->vm_start, vma->vm_end,
++		   flags & VM_READ ? 'r' : '-',
++		   flags & VM_WRITE ? 'w' : '-',
++		   flags & VM_EXEC ? 'x' : '-',
++		   flags & VM_MAYSHARE ? 's' : 'p');
++	page_tree_oracle_show_vma_name(m, vma);
++	seq_putc(m, '\n');
++}
++
++static void page_tree_oracle_note_truncated(struct page_tree_oracle_ctx *ctx)
++{
++	if (ctx->pte_count >= PAGE_TREE_ORACLE_MAX_PTES)
++		ctx->truncated = true;
++}
++
++static void page_tree_oracle_show_pmd_leaf(struct page_tree_oracle_ctx *ctx,
++					   unsigned long addr, unsigned long end,
++					   pgd_t pgd, p4d_t p4d,
++					   pud_t pud, pmd_t pmd)
++{
++	struct seq_file *m = ctx->m;
++
++	if (ctx->pte_count >= PAGE_TREE_ORACLE_MAX_PTES) {
++		ctx->truncated = true;
++		return;
++	}
++
++	page_tree_oracle_show_table_path(ctx, addr, pgd, p4d, pud, pmd);
++	seq_printf(m, "        PMD leaf VA 0x%016lx-0x%016lx PFN 0x%lx flags=",
++		   addr, end, pmd_pfn(pmd));
++	page_tree_oracle_show_flags(m, pmd_val(pmd));
++	seq_printf(m, " raw=0x%016lx\n", (unsigned long)pmd_val(pmd));
++
++	ctx->pte_count++;
++	page_tree_oracle_note_truncated(ctx);
++}
++
++static void page_tree_oracle_show_pud_leaf(struct page_tree_oracle_ctx *ctx,
++					   unsigned long addr, unsigned long end,
++					   pgd_t pgd, p4d_t p4d, pud_t pud)
++{
++	struct seq_file *m = ctx->m;
++
++	if (ctx->pte_count >= PAGE_TREE_ORACLE_MAX_PTES) {
++		ctx->truncated = true;
++		return;
++	}
++
++	page_tree_oracle_show_pud_path(ctx, addr, pgd, p4d);
++	seq_printf(m, "    PUD[%03lx] leaf VA 0x%016lx-0x%016lx PFN 0x%lx flags=",
++		   pud_index(addr), addr, end, pud_pfn(pud));
++	page_tree_oracle_show_flags(m, pud_val(pud));
++	seq_printf(m, " raw=0x%016lx\n", (unsigned long)pud_val(pud));
++
++	ctx->pte_count++;
++	page_tree_oracle_note_truncated(ctx);
++}
++
++static void page_tree_oracle_walk_pte_range(struct page_tree_oracle_ctx *ctx,
++					    pmd_t *pmdp, unsigned long addr,
++					    unsigned long end, pgd_t pgd,
++					    p4d_t p4d, pud_t pud, pmd_t pmd)
++{
++	struct seq_file *m = ctx->m;
++	spinlock_t *ptl;
++	pte_t *ptep;
++	pte_t *start_ptep;
++	bool path_printed = false;
++
++	if (ctx->truncated)
++		return;
++
++	start_ptep = ptep = pte_offset_map_lock(ctx->mm, pmdp, addr, &ptl);
++	if (!ptep)
++		return;
++
++	for (; addr < end; addr += PAGE_SIZE, ptep++) {
++		pte_t pte = ptep_get(ptep);
++
++		if (!pte_present(pte))
++			continue;
++
++		if (!path_printed) {
++			page_tree_oracle_show_table_path(ctx, addr, pgd, p4d,
++							 pud, pmd);
++			path_printed = true;
++		}
++
++		seq_printf(m, "        PTE[%03lx] VA 0x%016lx PFN 0x%lx flags=",
++			   pte_index(addr), addr, pte_pfn(pte));
++		page_tree_oracle_show_flags(m, pte_val(pte));
++		seq_printf(m, " raw=0x%016lx\n", (unsigned long)pte_val(pte));
++
++		ctx->pte_count++;
++		if (ctx->pte_count >= PAGE_TREE_ORACLE_MAX_PTES) {
++			ctx->truncated = true;
++			break;
++		}
++	}
++
++	pte_unmap_unlock(start_ptep, ptl);
++}
++
++static void page_tree_oracle_walk_pmd_range(struct page_tree_oracle_ctx *ctx,
++					    pud_t *pudp, unsigned long addr,
++					    unsigned long end, pgd_t pgd,
++					    p4d_t p4d, pud_t pud)
++{
++	pmd_t *pmdp = pmd_offset(pudp, addr);
++
++	do {
++		unsigned long next = pmd_addr_end(addr, end);
++		pmd_t pmd = pmdp_get(pmdp);
++
++		if (pmd_none(pmd) || !pmd_present(pmd))
++			goto next_pmd;
++		if (pmd_leaf(pmd)) {
++			page_tree_oracle_show_pmd_leaf(ctx, addr, next, pgd,
++						       p4d, pud, pmd);
++			goto next_pmd;
++		}
++		if (!pmd_bad(pmd))
++			page_tree_oracle_walk_pte_range(ctx, pmdp, addr, next,
++							pgd, p4d, pud, pmd);
++
++next_pmd:
++		if (ctx->truncated)
++			return;
++		pmdp++;
++		addr = next;
++	} while (addr < end);
++}
++
++static void page_tree_oracle_walk_pud_range(struct page_tree_oracle_ctx *ctx,
++					    p4d_t *p4dp, unsigned long addr,
++					    unsigned long end, pgd_t pgd,
++					    p4d_t p4d)
++{
++	pud_t *pudp = pud_offset(p4dp, addr);
++
++	do {
++		unsigned long next = pud_addr_end(addr, end);
++		pud_t pud = pudp_get(pudp);
++
++		if (pud_none(pud) || !pud_present(pud))
++			goto next_pud;
++		if (pud_leaf(pud)) {
++			page_tree_oracle_show_pud_leaf(ctx, addr, next, pgd,
++						       p4d, pud);
++			goto next_pud;
++		}
++		if (!pud_bad(pud))
++			page_tree_oracle_walk_pmd_range(ctx, pudp, addr, next,
++							pgd, p4d, pud);
++
++next_pud:
++		if (ctx->truncated)
++			return;
++		pudp++;
++		addr = next;
++	} while (addr < end);
++}
++
++static void page_tree_oracle_walk_p4d_range(struct page_tree_oracle_ctx *ctx,
++					    pgd_t *pgdp, unsigned long addr,
++					    unsigned long end, pgd_t pgd)
++{
++	p4d_t *p4dp = p4d_offset(pgdp, addr);
++
++	do {
++		unsigned long next = p4d_addr_end(addr, end);
++		p4d_t p4d = p4dp_get(p4dp);
++
++		if (p4d_none(p4d) || !p4d_present(p4d) || p4d_bad(p4d))
++			goto next_p4d;
++
++		page_tree_oracle_walk_pud_range(ctx, p4dp, addr, next,
++						pgd, p4d);
++
++next_p4d:
++		if (ctx->truncated)
++			return;
++		p4dp++;
++		addr = next;
++	} while (addr < end);
++}
++
++static void page_tree_oracle_walk_vma(struct page_tree_oracle_ctx *ctx,
++				      struct vm_area_struct *vma)
++{
++	unsigned long addr = vma->vm_start;
++	unsigned long end = vma->vm_end;
++
++	page_tree_oracle_show_vma(ctx->m, vma);
++
++	do {
++		unsigned long next = pgd_addr_end(addr, end);
++		pgd_t *pgdp = pgd_offset(ctx->mm, addr);
++		pgd_t pgd = pgdp_get(pgdp);
++
++		if (pgd_none(pgd) || !pgd_present(pgd) || pgd_bad(pgd))
++			goto next_pgd;
++
++		page_tree_oracle_walk_p4d_range(ctx, pgdp, addr, next, pgd);
++
++next_pgd:
++		if (ctx->truncated)
++			return;
++		addr = next;
++	} while (addr < end);
++}
++
++static int page_tree_oracle_show(struct seq_file *m, void *v)
++{
++	struct page_tree_oracle_ctx ctx = { .m = m };
++	struct vm_area_struct *vma;
++	struct task_struct *task = NULL;
++	struct mm_struct *mm;
++	struct pid *pid;
++	int pid_nr;
++	struct vma_iterator vmi;
++
++	mutex_lock(&page_tree_oracle_lock);
++	pid_nr = page_tree_oracle_pid;
++	mutex_unlock(&page_tree_oracle_lock);
++
++	seq_puts(m, "Page Tree Oracle\n");
++
++	if (pid_nr <= 0) {
++		seq_puts(m, "pid: not selected\n");
++		seq_puts(m, "usage:\n");
++		seq_puts(m, "  echo <pid> > /proc/page_tree_oracle\n");
++		seq_puts(m, "  cat /proc/page_tree_oracle\n");
++		return 0;
++	}
++
++	pid = find_get_pid(pid_nr);
++	if (!pid) {
++		seq_printf(m, "pid: %d\n", pid_nr);
++		seq_puts(m, "error: PID does not exist\n");
++		return 0;
++	}
++
++	rcu_read_lock();
++	task = pid_task(pid, PIDTYPE_PID);
++	if (task)
++		get_task_struct(task);
++	rcu_read_unlock();
++	put_pid(pid);
++
++	if (!task) {
++		seq_printf(m, "pid: %d\n", pid_nr);
++		seq_puts(m, "error: task disappeared\n");
++		return 0;
++	}
++
++	mm = get_task_mm(task);
++	if (!mm) {
++		seq_printf(m, "pid: %d\n", pid_nr);
++		seq_printf(m, "comm: %s\n", task->comm);
++		seq_puts(m, "error: task has no userspace mm\n");
++		put_task_struct(task);
++		return 0;
++	}
++
++	ctx.mm = mm;
++
++	seq_printf(m, "pid: %d\n", pid_nr);
++	seq_printf(m, "comm: %s\n", task->comm);
++	seq_printf(m, "mm: %px\n", mm);
++	seq_printf(m, "page size: %lu\n", PAGE_SIZE);
++	seq_printf(m, "pte output limit: %u\n", PAGE_TREE_ORACLE_MAX_PTES);
++	put_task_struct(task);
++
++	mmap_read_lock(mm);
++	vma_iter_init(&vmi, mm, 0);
++	for_each_vma(vmi, vma) {
++		page_tree_oracle_walk_vma(&ctx, vma);
++		if (ctx.truncated)
++			break;
++	}
++	mmap_read_unlock(mm);
++
++	if (!ctx.pte_count)
++		seq_puts(m, "\nno present user PTEs found\n");
++	if (ctx.truncated)
++		seq_printf(m, "\n... output truncated after %u PTEs ...\n",
++			   PAGE_TREE_ORACLE_MAX_PTES);
++
++	mmput(mm);
++	return 0;
++}
++
++static int page_tree_oracle_open(struct inode *inode, struct file *file)
++{
++	return single_open(file, page_tree_oracle_show, NULL);
++}
++
++static ssize_t page_tree_oracle_write(struct file *file,
++				      const char __user *buf, size_t count,
++				      loff_t *ppos)
++{
++	char kbuf[32];
++	int ret;
++	int pid;
++
++	if (!count)
++		return 0;
++	if (count >= sizeof(kbuf))
++		return -EINVAL;
++	if (copy_from_user(kbuf, buf, count))
++		return -EFAULT;
++
++	kbuf[count] = '\0';
++	ret = kstrtoint(strim(kbuf), 0, &pid);
++	if (ret)
++		return ret;
++	if (pid <= 0)
++		return -EINVAL;
++
++	mutex_lock(&page_tree_oracle_lock);
++	page_tree_oracle_pid = pid;
++	mutex_unlock(&page_tree_oracle_lock);
++
++	return count;
++}
++
++static const struct proc_ops page_tree_oracle_proc_ops = {
++	.proc_flags	= PROC_ENTRY_PERMANENT,
++	.proc_open	= page_tree_oracle_open,
++	.proc_read	= seq_read,
++	.proc_write	= page_tree_oracle_write,
++	.proc_lseek	= seq_lseek,
++	.proc_release	= single_release,
++};
++
++static int __init page_tree_oracle_init(void)
++{
++	if (!proc_create("page_tree_oracle", 0644, NULL,
++			 &page_tree_oracle_proc_ops))
++		return -ENOMEM;
++
++	pr_info("Page Tree Oracle procfs entry ready at /proc/page_tree_oracle\n");
++	return 0;
++}
++
++fs_initcall(page_tree_oracle_init);
